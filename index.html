@@ -628,7 +628,7 @@
             <div class="chat-title">
                 <div class="chat-avatar"><i class="fa-solid fa-robot"></i></div>
                 <div>
-                    <h3>Asistente IA</h3>
+                    <h3>Santi · Asistente</h3>
                     <span class="status">En línea</span>
                 </div>
             </div>
@@ -637,8 +637,7 @@
         <div class="chat-body" id="chat-body">
             <div class="message ai-message">
                 <div class="bubble">
-                    <p>¡Hola! Soy la inteligencia artificial de Bocanegra Gastro Bar ✨<br><br>¿En qué te puedo ayudar?
-                        Puedo recomendarte platos de la carta o sugerirte un buen maridaje.</p>
+                    <p>¡Hola! Soy Santi, el camarero virtual de Bocanegra Gastro Bar ✨<br><br>¿En qué te puedo ayudar? Puedo gestionar tu reserva o recomendarte platos de la carta.</p>
                 </div>
             </div>
         </div>
@@ -785,13 +784,17 @@
 
         // Responses logic simulation
         const responses = [
-            { keys: ['hola', 'buenas', 'saludos'], text: "¡Hola! Bienvenido a Bocanegra Gastro Bar. ¿Te gustaría ver nuestra carta o reservar mesa?" },
-            { keys: ['recomiend', 'sugerenc', 'mejor'], text: "Te sugiero que pruebes nuestro 'Lomo de Vaca Madurada' o si prefieres algo de mar, nuestro 'Ceviche de Corvina' está espectacular. ¿Eres más de carne o de pescado?" },
-            { keys: ['carne', 'vaca', 'lomo'], text: "¡Buena elección! Nuestro Lomo de Vaca Madurada se deshace en la boca. Acompañado con una copa de nuestro vino tinto de la casa, es la combinación perfecta." },
-            { keys: ['pescado', 'atun', 'ceviche'], text: "Excelente. El Tartar de Atún Rojo es uno de nuestros best-sellers, preparado con ingredientes frescos cada día." },
-            { keys: ['postre', 'dulce'], text: "No puedes irte sin probar nuestra Tarta de Queso Fluida, ¡es famosa en la ciudad!" },
-            { keys: ['precio', 'cuesta'], text: "Nuestros entrantes rondan los 15-20€ y los principales entre 18-30€. ¿Buscas algo en particular?" },
-            { keys: ['jamon', 'iberico'], text: "Nuestro Jamón Ibérico de Bellota es cortado a cuchillo al momento, tiene un precio de 24.00€. ¡Irresistible!" }
+            { keys: ['hola', 'buenas', 'saludos'], text: "¡Hola! Soy Santi, el camarero virtual. ¿Te gustaría reservar mesa o prefieres ver la carta y que te ayude a elegir?" },
+            { keys: ['reserv'], text: "¡Claro! Nos encanta recibirte. Dime, ¿para qué fecha y hora deseas la reserva?" },
+            { keys: ['hoy', 'mañana', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo', '20:', '21:', '22:', '14:', '13:'], text: "Perfecto 😍. ¿Para cuántas personas preparo la mesa?" },
+            { keys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'persona', 'pareja'], text: "Perfecto. Dime por favor un nombre para la reserva y un teléfono de contacto." },
+            { keys: ['nombre', 'mi', 'soy', '6', '7', '9'], text: "✅ ¡Reserva anotada! En breve recibirás un mensaje de confirmación con todos los detalles. Además te enviaremos un recordatorio 24 horas antes de tu visita para que no se te olvide. ¡Te esperamos en Bocanegra! 🥂" },
+            { keys: ['carta', 'ver', 'comida'], text: "Nuestra carta se basa en productos frescos. Antes de recomendarte nada, ¿alguna intolerancia o alergia que deba saber?" },
+            { keys: ['no', 'ninguna'], text: "Genial. Tenemos entrantes como las Croquetas de Carabineros o la Provoletta. ¿Vais a compartir o preferís un principal individual?" },
+            { keys: ['recomiend', 'sugerenc', 'mejor'], text: "Te sugiero que pruebes nuestra 'Chuleta de Simmental' para compartir, o si prefieres algo del mar, el 'Pulpo sobre Parmentier Trufada'. ¿Eres más de carne o de pescado?" },
+            { keys: ['carne', 'vaca', 'lomo', 'chuleta'], text: "¡Buena elección! Nuestras carnes maduradas se deshacen en la boca. Acompañado con una copa de nuestro vino tinto, es la combinación perfecta." },
+            { keys: ['pescado', 'pulpo', 'atun'], text: "Excelente. El Tartar de Atún Rojo o el Pulpo son de nuestros platos estrella, preparados con producto fresquísimo." },
+            { keys: ['postre', 'dulce', 'torrija'], text: "No puedes irte sin probar nuestra Torrija Brioche Caramelizada, el postre perfecto de la casa." }
         ];
 
         function addMessage(text, isUser = false) {
