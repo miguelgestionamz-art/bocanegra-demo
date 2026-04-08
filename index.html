@@ -649,105 +649,89 @@
         </div>
     </div>
 
-    <script>
+    
+       <script>
+        // ─── PON TU API KEY AQUÍ ───────────────────────
+        const OPENAI_KEY = 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
+        // ──────────────────────────────────────────────
+
+        const SYSTEM_PROMPT = `Eres Santi, el asistente virtual de Bocanegra Gastrobar en Getafe, Madrid.
+Dirección: Av. Sancho Panza, 6, 28906 Getafe, Madrid. Teléfono: 604 94 74 26.
+Precio medio: 20-30€ por persona.
+Horarios: Lunes a jueves 8:00-00:00 | Viernes 8:00-01:00 | Sábados 10:00-01:00 | Domingos 10:00-00:00.
+
+TONO: Cercano, profesional, con humor fino castellano. Detecta el idioma del cliente y responde en ese idioma. Respuestas cortas, máximo 3-4 líneas.
+
+AL INICIO saluda como Santi y presenta estas dos opciones:
+📅 RESERVAR MESA
+🍽️ CONSULTAR LA CARTA
+
+═══ FLUJO RESERVA ═══
+Recoge los datos UNO A UNO en este orden exacto:
+1. Fecha → 2. Hora → 3. Nº personas → 4. Nombre → 5. Teléfono → 6. Ocasión especial (opcional)
+
+REGLA ANTI-BUCLE — MUY IMPORTANTE:
+- Cuando el usuario responda, EXTRAE el dato, confírmalo brevemente y pasa AL SIGUIENTE
+- JAMÁS repitas una pregunta ya respondida
+- Si el usuario da varios datos a la vez, extráelos todos y pasa al siguiente que falte
+- Cuando tengas todos los datos ve DIRECTAMENTE al resumen
+
+Cuando tengas todos los datos muestra:
+✅ RESUMEN DE RESERVA
+📅 Fecha: [x] | ⏰ Hora: [x] | 👥 Personas: [x]
+👤 Nombre: [x] | 📞 Tel: [x]
+📝 Notas: [x o Ninguna]
+
+Luego añade: "En breve recibirás confirmación por WhatsApp o email y un recordatorio 24h antes. ¡Te esperamos! 🥂 (Reserva sujeta a confirmación del restaurante)"
+
+Después SIEMPRE pregunta:
+"¿Te gustaría formar parte de nuestros clientes selectos? 🌟 Rellena un breve formulario y te enviaremos descuentos exclusivos con preferencia en reservas en días especiales. ¿Te apunto? (Sí / Ahora no)"
+
+- Si dice SÍ → pide UNO A UNO: nombre completo, email, fecha de nacimiento. Al terminar: "¡Perfecto! Ya formas parte del club Bocanegra. Pronto recibirás novedades exclusivas. 🥂"
+- Si dice NO → "Sin problema, aquí tienes nuestra carta por si necesitas algo más."
+
+═══ FLUJO CARTA ═══
+Pregunta por alergias primero. Recomienda según preferencias. Si piden algo que no hay, redirige positivamente.
+
+═══ SIEMPRE ═══
+No gestionas pagos. Cada conversación es nueva e independiente. Si el cliente se despide cierra con "¡Hasta pronto! Te esperamos en Bocanegra. 🥂"`;
+
         // Define the Menu Structure
         const menuData = [
-            {
-                id: 1,
-                title: "Jamón Ibérico de Bellota",
-                price: "24.00€",
-                description: "Cortado a cuchillo al momento, acompañado con pan de cristal y tomate rallado.",
-                category: "entrantes"
-            },
-            {
-                id: 2,
-                title: "Croquetas Cremosas",
-                price: "12.50€",
-                description: "Surtido de croquetas caseras: jamón ibérico y boletus con trufa negra.",
-                category: "entrantes"
-            },
-            {
-                id: 3,
-                title: "Ceviche de Corvina",
-                price: "16.00€",
-                description: "Marinado en leche de tigre de ají amarillo, maíz chulpi y boniato.",
-                category: "entrantes"
-            },
-            {
-                id: 4,
-                title: "Lomo de Vaca Madurada",
-                price: "28.00€",
-                description: "Corte premium a la parrilla, patatas asadas al romero y pimientos del padrón.",
-                category: "principales"
-            },
-            {
-                id: 5,
-                title: "Tartar de Atún Rojo",
-                price: "22.00€",
-                description: "Base de aguacate y aliño de soja con emulsión de wasabi ligero.",
-                category: "principales"
-            },
-            {
-                id: 6,
-                title: "Risotto de Setas Silvestres",
-                price: "18.50€",
-                description: "Cremoso de parmesano, trufa fresca rallada y crujiente de queso.",
-                category: "principales"
-            },
-            {
-                id: 7,
-                title: "Tarta de Queso Fluida",
-                price: "7.50€",
-                description: "Nuestra famosa tarta de queso al horno, estilo viña, con centro cremoso.",
-                category: "postres"
-            },
-            {
-                id: 8,
-                title: "Coulant de Chocolate Volcánico",
-                price: "8.00€",
-                description: "Con helado artesanal de vainilla Bourbon de Madagascar.",
-                category: "postres"
-            }
+            { id:1, title:"Jamón Ibérico de Bellota", price:"24.00€", description:"Cortado a cuchillo al momento, acompañado con pan de cristal y tomate rallado.", category:"entrantes" },
+            { id:2, title:"Croquetas Cremosas", price:"12.50€", description:"Surtido de croquetas caseras: jamón ibérico y boletus con trufa negra.", category:"entrantes" },
+            { id:3, title:"Ceviche de Corvina", price:"16.00€", description:"Marinado en leche de tigre de ají amarillo, maíz chulpi y boniato.", category:"entrantes" },
+            { id:4, title:"Lomo de Vaca Madurada", price:"28.00€", description:"Corte premium a la parrilla, patatas asadas al romero y pimientos del padrón.", category:"principales" },
+            { id:5, title:"Tartar de Atún Rojo", price:"22.00€", description:"Base de aguacate y aliño de soja con emulsión de wasabi ligero.", category:"principales" },
+            { id:6, title:"Risotto de Setas Silvestres", price:"18.50€", description:"Cremoso de parmesano, trufa fresca rallada y crujiente de queso.", category:"principales" },
+            { id:7, title:"Tarta de Queso Fluida", price:"7.50€", description:"Nuestra famosa tarta de queso al horno, estilo viña, con centro cremoso.", category:"postres" },
+            { id:8, title:"Coulant de Chocolate Volcánico", price:"8.00€", description:"Con helado artesanal de vainilla Bourbon de Madagascar.", category:"postres" }
         ];
 
-        // Reference to DOM elements
         const menuGrid = document.getElementById('menu-grid');
         const filterBtns = document.querySelectorAll('.filter-btn');
 
-        // Render Menu function
         function renderMenu(category = 'all') {
             menuGrid.innerHTML = '';
-
-            const filteredData = category === 'all'
-                ? menuData
-                : menuData.filter(item => item.category === category);
-
+            const filteredData = category === 'all' ? menuData : menuData.filter(item => item.category === category);
             filteredData.forEach(item => {
                 const menuItem = document.createElement('div');
                 menuItem.className = 'menu-item';
-
                 menuItem.innerHTML = `
                     <div class="item-header">
                         <h3 class="item-title">${item.title}</h3>
                         <span class="item-price">${item.price}</span>
                     </div>
-                    <p class="item-desc">${item.description}</p>
-                `;
-
+                    <p class="item-desc">${item.description}</p>`;
                 menuGrid.appendChild(menuItem);
             });
         }
 
-        // Menu Filtering Logic
         filterBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                // Remove active class from all
                 filterBtns.forEach(b => b.classList.remove('active'));
-                // Add active to clicked
                 btn.classList.add('active');
-
                 const category = btn.getAttribute('data-filter');
-                // Add quick fade effect
                 menuGrid.style.opacity = '0';
                 setTimeout(() => {
                     renderMenu(category);
@@ -757,7 +741,6 @@
             });
         });
 
-        // Initial Render
         renderMenu();
 
         // --- AI Chat Logic ---
@@ -767,13 +750,14 @@
         const chatInput = document.getElementById('chat-input');
         const chatSend = document.getElementById('chat-send');
         const chatBody = document.getElementById('chat-body');
+        let history = [];
+        let chatStarted = false;
 
-        // Toggle Chat Window
         chatToggle.addEventListener('click', () => {
             chatWrapper.classList.toggle('hidden');
-            // Remove pulse when interacted
             chatToggle.classList.remove('pulse');
             if (!chatWrapper.classList.contains('hidden')) {
+                if (!chatStarted) { chatStarted = true; initChat(); }
                 chatInput.focus();
             }
         });
@@ -782,66 +766,71 @@
             chatWrapper.classList.add('hidden');
         });
 
-        // Responses logic simulation
-        const responses = [
-            { keys: ['hola', 'buenas', 'saludos'], text: "¡Hola! Soy Santi, el camarero virtual. ¿Te gustaría reservar mesa o prefieres ver la carta y que te ayude a elegir?" },
-            { keys: ['reserv'], text: "¡Claro! Nos encanta recibirte. Dime, ¿para qué fecha y hora deseas la reserva?" },
-            { keys: ['hoy', 'mañana', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo', '20:', '21:', '22:', '14:', '13:'], text: "Perfecto 😍. ¿Para cuántas personas preparo la mesa?" },
-            { keys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'persona', 'pareja'], text: "Perfecto. Dime por favor un nombre para la reserva y un teléfono de contacto." },
-            { keys: ['nombre', 'mi', 'soy', '6', '7', '9'], text: "✅ ¡Reserva anotada! En breve recibirás un mensaje de confirmación con todos los detalles. Además te enviaremos un recordatorio 24 horas antes de tu visita para que no se te olvide. ¡Te esperamos en Bocanegra! 🥂" },
-            { keys: ['carta', 'ver', 'comida'], text: "Nuestra carta se basa en productos frescos. Antes de recomendarte nada, ¿alguna intolerancia o alergia que deba saber?" },
-            { keys: ['no', 'ninguna'], text: "Genial. Tenemos entrantes como las Croquetas de Carabineros o la Provoletta. ¿Vais a compartir o preferís un principal individual?" },
-            { keys: ['recomiend', 'sugerenc', 'mejor'], text: "Te sugiero que pruebes nuestra 'Chuleta de Simmental' para compartir, o si prefieres algo del mar, el 'Pulpo sobre Parmentier Trufada'. ¿Eres más de carne o de pescado?" },
-            { keys: ['carne', 'vaca', 'lomo', 'chuleta'], text: "¡Buena elección! Nuestras carnes maduradas se deshacen en la boca. Acompañado con una copa de nuestro vino tinto, es la combinación perfecta." },
-            { keys: ['pescado', 'pulpo', 'atun'], text: "Excelente. El Tartar de Atún Rojo o el Pulpo son de nuestros platos estrella, preparados con producto fresquísimo." },
-            { keys: ['postre', 'dulce', 'torrija'], text: "No puedes irte sin probar nuestra Torrija Brioche Caramelizada, el postre perfecto de la casa." }
-        ];
-
         function addMessage(text, isUser = false) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
-
-            msgDiv.innerHTML = `
-                <div class="bubble">
-                    <p>${text}</p>
-                </div>
-            `;
-
+            msgDiv.innerHTML = `<div class="bubble"><p>${text.replace(/\n/g,'<br>')}</p></div>`;
             chatBody.appendChild(msgDiv);
             chatBody.scrollTop = chatBody.scrollHeight;
         }
 
+        function showTyping() {
+            const d = document.createElement('div');
+            d.className = 'message ai-message'; d.id = 'typing';
+            d.innerHTML = '<div class="bubble"><span style="opacity:.5">· · ·</span></div>';
+            chatBody.appendChild(d);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function removeTyping() {
+            const t = document.getElementById('typing');
+            if (t) t.remove();
+        }
+
+        async function callOpenAI(userMsg) {
+            if (userMsg) {
+                history.push({ role: 'user', content: userMsg });
+                addMessage(userMsg, true);
+                chatInput.value = '';
+            }
+            chatSend.disabled = true;
+            showTyping();
+            try {
+                const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${OPENAI_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o',
+                        max_tokens: 500,
+                        messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...history]
+                    })
+                });
+                const data = await res.json();
+                removeTyping();
+                const reply = data.choices?.[0]?.message?.content || 'Lo siento, ha habido un error. Llámanos: 604 94 74 26';
+                history.push({ role: 'assistant', content: reply });
+                addMessage(reply);
+            } catch (e) {
+                removeTyping();
+                addMessage('Sin conexión en este momento. Puedes llamarnos: 604 94 74 26 🙏');
+            }
+            chatSend.disabled = false;
+        }
+
+        function initChat() { callOpenAI(null); }
+
         function handleChat() {
             const text = chatInput.value.trim();
-            if (text === '') return;
-
-            // Add user message
-            addMessage(text, true);
-            chatInput.value = '';
-
-            // Thinking delay...
-            setTimeout(() => {
-                // Simple mock NLP matching
-                let reply = "Lo siento, no he entendido completamente. Pero te invito a echar un vistazo a nuestra carta de platos, estoy seguro de que encontrarás algo delicioso.";
-                const lowerText = text.toLowerCase();
-
-                for (let r of responses) {
-                    if (r.keys.some(k => lowerText.includes(k))) {
-                        reply = r.text;
-                        break;
-                    }
-                }
-
-                addMessage(reply, false);
-            }, 800 + Math.random() * 500); // Between 0.8s and 1.3s delay for realism
+            if (!text || chatSend.disabled) return;
+            callOpenAI(text);
         }
 
         chatSend.addEventListener('click', handleChat);
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleChat();
-            }
-        });
+        chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleChat(); });
+    </script>
     </script>
 </body>
 
