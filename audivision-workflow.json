@@ -6,11 +6,11 @@
       "name": "Sticky Note Config",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [0, -280],
+      "position": [0, -300],
       "parameters": {
-        "content": "## ⚙️ Variables de Entorno — Settings → Environment Variables\n\n| Variable | Descripción |\n|---|---|\n| `SPREADSHEET_ID` | ID de Google Sheets (de la URL) |\n| `BREVO_API_KEY` | API Key de Brevo |\n| `WHATSAPP_PHONE_NUMBER_ID` | ID del número WhatsApp Business |\n| `WHATSAPP_ACCESS_TOKEN` | Token de acceso Meta API |\n| `GOOGLE_MAPS_REVIEW_LINK` | Link de reseña Google Maps |\n| `CALCOM_BOOKING_LINK` | URL pública de reserva Cal.com |\n| `DRIVE_FOLDER_PACIENTES_ID` | ID carpeta Drive con lista de pacientes |\n| `TELEGRAM_BOT_TOKEN` | Token del bot Telegram |\n| `TELEGRAM_ADMIN_CHAT_ID` | Chat ID del administrador |\n\n**Hojas Sheets necesarias:** `Reservas` y `Errores`\n**Templates WhatsApp aprobados:** `solicitar_resena_google` y `reactivacion_mensual`",
-        "height": 300,
-        "width": 680,
+        "content": "## ⚙️ Variables de Entorno — Settings → Environment Variables\n\n| Variable | Descripción |\n|---|---|\n| `SPREADSHEET_ID` | ID de Google Sheets (de la URL) |\n| `OPENAI_API_KEY` | API Key de OpenAI (para gpt-4o-mini) |\n| `BREVO_API_KEY` | API Key de Brevo |\n| `WHATSAPP_PHONE_NUMBER_ID` | ID del número WhatsApp Business |\n| `WHATSAPP_ACCESS_TOKEN` | Token de acceso Meta API |\n| `GOOGLE_MAPS_REVIEW_LINK` | Link de reseña Google Maps |\n| `CALCOM_BOOKING_LINK` | URL pública de reserva Cal.com |\n| `DRIVE_FOLDER_PACIENTES_ID` | ID carpeta Drive con lista de pacientes |\n| `TELEGRAM_BOT_TOKEN` | Token del bot Telegram |\n| `TELEGRAM_ADMIN_CHAT_ID` | Chat ID del administrador |\n\n**Hojas Sheets necesarias:** `Reservas` y `Errores`\n**Templates WhatsApp aprobados:** `solicitar_resena_google` y `reactivacion_mensual`\n\n**Conectividad:** Webhook+Cron Hora → Leer Reservas ← Split Mensual (done)\nEl flujo mensual se une al principal al terminar de enviar todos los WhatsApp.",
+        "height": 360,
+        "width": 720,
         "color": 4
       }
     },
@@ -37,7 +37,7 @@
       "typeVersion": 2,
       "position": [420, 100],
       "parameters": {
-        "jsCode": "// Normaliza el payload de Cal.com BOOKING_CREATED\nconst body = $input.first().json;\nconst payload = body.payload || body;\n\n// Attendees: el cliente es quien NO es el organizador\nconst attendees = payload.attendees || [];\nconst organizer = payload.organizer || {};\nconst cliente = attendees.find(a => a.email !== organizer.email) || attendees[0] || {};\n\nconst booking_id = String(payload.uid || payload.bookingUid || payload.id || Date.now());\nconst cliente_nombre = (cliente.name || payload.responses?.name?.value || '').trim();\nconst email = (cliente.email || payload.responses?.email?.value || '').toLowerCase().trim();\n\n// Normalizar teléfono\nconst telefonoRaw = (\n  payload.responses?.phone?.value ||\n  payload.responses?.phone_number?.value ||\n  payload.metadata?.phone || ''\n);\nconst telefono = telefonoRaw.replace(/\\s+/g, '').replace(/^00/, '+');\n\nconst servicio = (payload.eventTitle || payload.title || payload.type || 'Consulta Audivisión').trim();\n\nreturn [{\n  json: {\n    booking_id,\n    cliente_nombre,\n    telefono,\n    email,\n    servicio,\n    fecha_inicio: payload.startTime || '',\n    fecha_fin: payload.endTime || '',\n    estado: 'CONFIRMADA',\n    sms_enviado: 'FALSE',\n    resena_enviada: 'FALSE'\n  }\n}];"
+        "jsCode": "const body = $input.first().json;\nconst payload = body.payload || body;\n\nconst attendees = payload.attendees || [];\nconst organizer = payload.organizer || {};\nconst cliente = attendees.find(a => a.email !== organizer.email) || attendees[0] || {};\n\nconst booking_id = String(payload.uid || payload.bookingUid || payload.id || Date.now());\nconst cliente_nombre = (cliente.name || payload.responses?.name?.value || '').trim();\nconst email = (cliente.email || payload.responses?.email?.value || '').toLowerCase().trim();\nconst telefonoRaw = (\n  payload.responses?.phone?.value ||\n  payload.responses?.phone_number?.value ||\n  payload.metadata?.phone || ''\n);\nconst telefono = telefonoRaw.replace(/\\s+/g, '').replace(/^00/, '+');\nconst servicio = (payload.eventTitle || payload.title || payload.type || 'Consulta Audivisión').trim();\n\nreturn [{\n  json: {\n    booking_id,\n    cliente_nombre,\n    telefono,\n    email,\n    servicio,\n    fecha_inicio: payload.startTime || '',\n    fecha_fin: payload.endTime || '',\n    estado: 'CONFIRMADA',\n    sms_enviado: 'FALSE',\n    resena_enviada: 'FALSE'\n  }\n}];"
       }
     },
     {
@@ -48,16 +48,8 @@
       "position": [700, 0],
       "parameters": {
         "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "={{ $env.SPREADSHEET_ID }}",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Reservas",
-          "mode": "name"
-        },
+        "documentId": { "__rl": true, "value": "={{ $env.SPREADSHEET_ID }}", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Reservas", "mode": "name" },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
@@ -76,10 +68,7 @@
         "options": { "valueInputMode": "RAW" }
       },
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "CRED_GOOGLE_SHEETS",
-          "name": "Google Sheets OAuth2"
-        }
+        "googleSheetsOAuth2Api": { "id": "CRED_GOOGLE_SHEETS", "name": "Google Sheets OAuth2" }
       }
     },
     {
@@ -90,11 +79,7 @@
       "position": [700, 220],
       "parameters": {
         "operation": "create",
-        "calendar": {
-          "__rl": true,
-          "value": "primary",
-          "mode": "id"
-        },
+        "calendar": { "__rl": true, "value": "primary", "mode": "id" },
         "start": "={{ $json.fecha_inicio }}",
         "end": "={{ $json.fecha_fin }}",
         "additionalFields": {
@@ -104,10 +89,7 @@
         }
       },
       "credentials": {
-        "googleCalendarOAuth2Api": {
-          "id": "CRED_GOOGLE_CALENDAR",
-          "name": "Google Calendar OAuth2"
-        }
+        "googleCalendarOAuth2Api": { "id": "CRED_GOOGLE_CALENDAR", "name": "Google Calendar OAuth2" }
       }
     },
 
@@ -119,12 +101,7 @@
       "position": [160, 380],
       "parameters": {
         "rule": {
-          "interval": [
-            {
-              "field": "hours",
-              "hoursInterval": 1
-            }
-          ]
+          "interval": [{ "field": "hours", "hoursInterval": 1 }]
         }
       }
     },
@@ -137,23 +114,12 @@
       "position": [980, 200],
       "parameters": {
         "operation": "getAll",
-        "documentId": {
-          "__rl": true,
-          "value": "={{ $env.SPREADSHEET_ID }}",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Reservas",
-          "mode": "name"
-        },
+        "documentId": { "__rl": true, "value": "={{ $env.SPREADSHEET_ID }}", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Reservas", "mode": "name" },
         "options": {}
       },
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "CRED_GOOGLE_SHEETS",
-          "name": "Google Sheets OAuth2"
-        }
+        "googleSheetsOAuth2Api": { "id": "CRED_GOOGLE_SHEETS", "name": "Google Sheets OAuth2" }
       }
     },
 
@@ -164,7 +130,17 @@
       "typeVersion": 2,
       "position": [1260, 80],
       "parameters": {
-        "jsCode": "// Selecciona citas dentro de la ventana 23-25h con sms_enviado=FALSE\n// Si retorna vacío los nodos siguientes no se ejecutan (anti-duplicado nativo)\nconst ahora = new Date();\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const row = item.json;\n\n  // Anti-duplicado: saltar si el flag ya está marcado\n  if (['true','TRUE','1',true,'Verdadero'].includes(row.sms_enviado)) continue;\n\n  if (!row.telefono || !row.booking_id) continue;\n\n  const fechaCita = new Date(row.fecha_inicio);\n  if (isNaN(fechaCita.getTime())) continue;\n\n  const diffHoras = (fechaCita - ahora) / (1000 * 60 * 60);\n\n  // Ventana: 23h a 25h ANTES de la cita\n  if (diffHoras >= 23 && diffHoras <= 25) {\n    resultados.push({ json: { ...row } });\n  }\n}\n\nreturn resultados;"
+        "jsCode": "const ahora = new Date();\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const row = item.json;\n  if (['true','TRUE','1',true,'Verdadero'].includes(row.sms_enviado)) continue;\n  if (!row.telefono || !row.booking_id) continue;\n  const fechaCita = new Date(row.fecha_inicio);\n  if (isNaN(fechaCita.getTime())) continue;\n  const diffHoras = (fechaCita - ahora) / (1000 * 60 * 60);\n  if (diffHoras >= 23 && diffHoras <= 25) {\n    resultados.push({ json: { ...row } });\n  }\n}\n\nreturn resultados;"
+      }
+    },
+    {
+      "id": "ai-001",
+      "name": "IA Personalizar SMS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 80],
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\n\nconst fechaFormateada = new Date(row.fecha_inicio).toLocaleString('es-ES', {\n  timeZone: 'Europe/Madrid',\n  weekday: 'long', day: '2-digit', month: 'long',\n  hour: '2-digit', minute: '2-digit'\n});\n\nconst fallback = `Hola ${row.cliente_nombre}, recuerda tu cita en Audivisión: ${row.servicio} el ${fechaFormateada}. Gestión: ${$env.CALCOM_BOOKING_LINK}`;\n\ntry {\n  const res = await fetch('https://api.openai.com/v1/chat/completions', {\n    method: 'POST',\n    headers: {\n      'Authorization': 'Bearer ' + $env.OPENAI_API_KEY,\n      'Content-Type': 'application/json'\n    },\n    body: JSON.stringify({\n      model: 'gpt-4o-mini',\n      max_tokens: 180,\n      messages: [\n        {\n          role: 'system',\n          content: 'Eres el asistente de Audivisión, clínica de audiología en España. Escribes mensajes breves, cálidos y profesionales.'\n        },\n        {\n          role: 'user',\n          content: `Escribe un SMS de recordatorio de cita. Máximo 155 caracteres. Sin emojis. Incluye nombre, servicio, fecha y link al final.\\n\\nPaciente: ${row.cliente_nombre}\\nServicio: ${row.servicio}\\nFecha: ${fechaFormateada}\\nLink: ${$env.CALCOM_BOOKING_LINK}\\n\\nResponde SOLO con el texto del SMS.`\n        }\n      ]\n    })\n  });\n  const data = await res.json();\n  const mensaje = (data.choices?.[0]?.message?.content || '').trim().substring(0, 160);\n  return [{ json: { ...row, mensaje_sms: mensaje || fallback } }];\n} catch (e) {\n  return [{ json: { ...row, mensaje_sms: fallback } }];\n}"
       }
     },
     {
@@ -172,7 +148,7 @@
       "name": "Brevo SMS Recordatorio",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1540, 80],
+      "position": [1820, 80],
       "parameters": {
         "method": "POST",
         "url": "https://api.brevo.com/v3/transactionalSMS/sms",
@@ -187,7 +163,7 @@
         "sendBody": true,
         "bodyContentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({\n  type: 'transactional',\n  unicodeEnabled: false,\n  sender: 'Audivision',\n  recipient: $json.telefono,\n  content: 'Hola ' + $json.cliente_nombre + ', te recordamos tu cita en Audivisión mañana. Servicio: ' + $json.servicio + '. Cancelaciones: ' + $env.CALCOM_BOOKING_LINK + ' ¡Te esperamos!'\n}) }}",
+        "body": "={{ JSON.stringify({ type: 'transactional', unicodeEnabled: false, sender: 'Audivision', recipient: $json.telefono, content: $json.mensaje_sms }) }}",
         "options": {}
       }
     },
@@ -196,19 +172,11 @@
       "name": "Actualizar SMS Enviado",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [1820, 80],
+      "position": [2100, 80],
       "parameters": {
         "operation": "update",
-        "documentId": {
-          "__rl": true,
-          "value": "={{ $env.SPREADSHEET_ID }}",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Reservas",
-          "mode": "name"
-        },
+        "documentId": { "__rl": true, "value": "={{ $env.SPREADSHEET_ID }}", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Reservas", "mode": "name" },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
@@ -217,37 +185,14 @@
           },
           "matchingColumns": ["booking_id"],
           "schema": [
-            {
-              "id": "booking_id",
-              "displayName": "booking_id",
-              "required": false,
-              "defaultMatch": true,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "sms_enviado",
-              "displayName": "sms_enviado",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            }
+            { "id": "booking_id", "displayName": "booking_id", "required": false, "defaultMatch": true, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false },
+            { "id": "sms_enviado", "displayName": "sms_enviado", "required": false, "defaultMatch": false, "canBeUsedToMatch": false, "display": true, "type": "string", "readOnly": false, "removed": false }
           ]
         },
         "options": {}
       },
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "CRED_GOOGLE_SHEETS",
-          "name": "Google Sheets OAuth2"
-        }
+        "googleSheetsOAuth2Api": { "id": "CRED_GOOGLE_SHEETS", "name": "Google Sheets OAuth2" }
       }
     },
 
@@ -258,7 +203,17 @@
       "typeVersion": 2,
       "position": [1260, 320],
       "parameters": {
-        "jsCode": "// Selecciona citas que pasaron hace 23-25h con resena_enviada=FALSE\n// Si retorna vacío los nodos siguientes no se ejecutan (anti-duplicado nativo)\nconst ahora = new Date();\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const row = item.json;\n\n  // Anti-duplicado: saltar si el flag ya está marcado\n  if (['true','TRUE','1',true,'Verdadero'].includes(row.resena_enviada)) continue;\n\n  if (!row.telefono || !row.booking_id) continue;\n\n  const fechaCita = new Date(row.fecha_inicio);\n  if (isNaN(fechaCita.getTime())) continue;\n\n  const diffHoras = (fechaCita - ahora) / (1000 * 60 * 60); // negativo si ya pasó\n\n  // Ventana: entre -25h y -23h (cita hace 23-25 horas)\n  if (diffHoras >= -25 && diffHoras <= -23) {\n    resultados.push({ json: { ...row } });\n  }\n}\n\nreturn resultados;"
+        "jsCode": "const ahora = new Date();\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const row = item.json;\n  if (['true','TRUE','1',true,'Verdadero'].includes(row.resena_enviada)) continue;\n  if (!row.telefono || !row.booking_id) continue;\n  const fechaCita = new Date(row.fecha_inicio);\n  if (isNaN(fechaCita.getTime())) continue;\n  const diffHoras = (fechaCita - ahora) / (1000 * 60 * 60);\n  if (diffHoras >= -25 && diffHoras <= -23) {\n    resultados.push({ json: { ...row } });\n  }\n}\n\nreturn resultados;"
+      }
+    },
+    {
+      "id": "ai-002",
+      "name": "IA Personalizar Resena",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 320],
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\n\nconst fallback = `Hola ${row.cliente_nombre}, esperamos que tu experiencia en Audivisión haya sido excelente. ¿Nos dejarías una reseña en Google? Significaría mucho para nosotros: ${$env.GOOGLE_MAPS_REVIEW_LINK}`;\n\ntry {\n  const res = await fetch('https://api.openai.com/v1/chat/completions', {\n    method: 'POST',\n    headers: {\n      'Authorization': 'Bearer ' + $env.OPENAI_API_KEY,\n      'Content-Type': 'application/json'\n    },\n    body: JSON.stringify({\n      model: 'gpt-4o-mini',\n      max_tokens: 200,\n      messages: [\n        {\n          role: 'system',\n          content: 'Eres el asistente de Audivisión, clínica de audiología en España. Escribes mensajes de WhatsApp breves, cálidos y naturales.'\n        },\n        {\n          role: 'user',\n          content: `Escribe un mensaje de WhatsApp pidiendo una reseña de Google. Máximo 3 frases. Cálido, natural, sin parecer spam.\\n\\nPaciente: ${row.cliente_nombre}\\nServicio recibido: ${row.servicio}\\nLink de reseña: ${$env.GOOGLE_MAPS_REVIEW_LINK}\\n\\nResponde SOLO con el texto del mensaje.`\n        }\n      ]\n    })\n  });\n  const data = await res.json();\n  const mensaje = (data.choices?.[0]?.message?.content || '').trim();\n  return [{ json: { ...row, mensaje_resena: mensaje || fallback } }];\n} catch (e) {\n  return [{ json: { ...row, mensaje_resena: fallback } }];\n}"
       }
     },
     {
@@ -266,7 +221,7 @@
       "name": "WhatsApp Solicitar Resena",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1540, 320],
+      "position": [1820, 320],
       "parameters": {
         "method": "POST",
         "url": "=https://graph.facebook.com/v18.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
@@ -280,7 +235,7 @@
         "sendBody": true,
         "bodyContentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({\n  messaging_product: 'whatsapp',\n  to: $json.telefono,\n  type: 'template',\n  template: {\n    name: 'solicitar_resena_google',\n    language: { code: 'es_ES' },\n    components: [{\n      type: 'body',\n      parameters: [\n        { type: 'text', text: $json.cliente_nombre },\n        { type: 'text', text: $env.GOOGLE_MAPS_REVIEW_LINK }\n      ]\n    }]\n  }\n}) }}",
+        "body": "={{ JSON.stringify({\n  messaging_product: 'whatsapp',\n  to: $json.telefono,\n  type: 'template',\n  template: {\n    name: 'solicitar_resena_google',\n    language: { code: 'es_ES' },\n    components: [{\n      type: 'body',\n      parameters: [\n        { type: 'text', text: $json.cliente_nombre },\n        { type: 'text', text: $json.mensaje_resena },\n        { type: 'text', text: $env.GOOGLE_MAPS_REVIEW_LINK }\n      ]\n    }]\n  }\n}) }}",
         "options": {}
       }
     },
@@ -289,19 +244,11 @@
       "name": "Actualizar Resena Enviada",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [1820, 320],
+      "position": [2100, 320],
       "parameters": {
         "operation": "update",
-        "documentId": {
-          "__rl": true,
-          "value": "={{ $env.SPREADSHEET_ID }}",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Reservas",
-          "mode": "name"
-        },
+        "documentId": { "__rl": true, "value": "={{ $env.SPREADSHEET_ID }}", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Reservas", "mode": "name" },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
@@ -310,37 +257,14 @@
           },
           "matchingColumns": ["booking_id"],
           "schema": [
-            {
-              "id": "booking_id",
-              "displayName": "booking_id",
-              "required": false,
-              "defaultMatch": true,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "resena_enviada",
-              "displayName": "resena_enviada",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            }
+            { "id": "booking_id", "displayName": "booking_id", "required": false, "defaultMatch": true, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false },
+            { "id": "resena_enviada", "displayName": "resena_enviada", "required": false, "defaultMatch": false, "canBeUsedToMatch": false, "display": true, "type": "string", "readOnly": false, "removed": false }
           ]
         },
         "options": {}
       },
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "CRED_GOOGLE_SHEETS",
-          "name": "Google Sheets OAuth2"
-        }
+        "googleSheetsOAuth2Api": { "id": "CRED_GOOGLE_SHEETS", "name": "Google Sheets OAuth2" }
       }
     },
 
@@ -349,17 +273,10 @@
       "name": "Cron Mensual Reactivacion",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [160, 620],
+      "position": [160, 580],
       "parameters": {
         "rule": {
-          "interval": [
-            {
-              "field": "months",
-              "triggerAtDayOfMonth": 1,
-              "triggerAtHour": 10,
-              "triggerAtMinute": 0
-            }
-          ]
+          "interval": [{ "field": "months", "triggerAtDayOfMonth": 1, "triggerAtHour": 10, "triggerAtMinute": 0 }]
         }
       }
     },
@@ -368,28 +285,16 @@
       "name": "Listar Archivos Drive",
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
-      "position": [420, 620],
+      "position": [420, 580],
       "parameters": {
         "operation": "fileList",
-        "driveId": {
-          "__rl": true,
-          "value": "MyDrive",
-          "mode": "list",
-          "cachedResultName": "My Drive"
-        },
-        "folderId": {
-          "__rl": true,
-          "value": "={{ $env.DRIVE_FOLDER_PACIENTES_ID }}",
-          "mode": "id"
-        },
+        "driveId": { "__rl": true, "value": "MyDrive", "mode": "list", "cachedResultName": "My Drive" },
+        "folderId": { "__rl": true, "value": "={{ $env.DRIVE_FOLDER_PACIENTES_ID }}", "mode": "id" },
         "returnAll": true,
         "options": {}
       },
       "credentials": {
-        "googleDriveOAuth2Api": {
-          "id": "CRED_GOOGLE_DRIVE",
-          "name": "Google Drive OAuth2"
-        }
+        "googleDriveOAuth2Api": { "id": "CRED_GOOGLE_DRIVE", "name": "Google Drive OAuth2" }
       }
     },
     {
@@ -397,23 +302,14 @@
       "name": "Descargar Archivo Pacientes",
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
-      "position": [700, 620],
+      "position": [700, 580],
       "parameters": {
         "operation": "download",
-        "fileId": {
-          "__rl": true,
-          "value": "={{ $json.id }}",
-          "mode": "id"
-        },
-        "options": {
-          "binaryPropertyName": "data"
-        }
+        "fileId": { "__rl": true, "value": "={{ $json.id }}", "mode": "id" },
+        "options": { "binaryPropertyName": "data" }
       },
       "credentials": {
-        "googleDriveOAuth2Api": {
-          "id": "CRED_GOOGLE_DRIVE",
-          "name": "Google Drive OAuth2"
-        }
+        "googleDriveOAuth2Api": { "id": "CRED_GOOGLE_DRIVE", "name": "Google Drive OAuth2" }
       }
     },
     {
@@ -421,15 +317,11 @@
       "name": "Parsear Lista Pacientes",
       "type": "n8n-nodes-base.spreadsheetFile",
       "typeVersion": 2,
-      "position": [980, 620],
+      "position": [980, 580],
       "parameters": {
         "operation": "fromFile",
         "binaryPropertyName": "data",
-        "options": {
-          "headerRow": true,
-          "includeEmptyRows": false,
-          "sheetName": 0
-        }
+        "options": { "headerRow": true, "includeEmptyRows": false, "sheetName": 0 }
       }
     },
     {
@@ -437,10 +329,20 @@
       "name": "Split por Paciente",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [1260, 620],
+      "position": [1260, 580],
       "parameters": {
         "batchSize": 1,
         "options": { "reset": false }
+      }
+    },
+    {
+      "id": "ai-003",
+      "name": "IA Personalizar Reactivacion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 480],
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\nconst nombre = (row.nombre || row.cliente_nombre || row.name || 'paciente').trim();\n\nconst fallback = `Hola ${nombre}, hace tiempo que no sabemos de ti en Audivisión. ¿Todo bien con tu audición? Si quieres una revisión, puedes reservar aquí: ${$env.CALCOM_BOOKING_LINK}`;\n\ntry {\n  const res = await fetch('https://api.openai.com/v1/chat/completions', {\n    method: 'POST',\n    headers: {\n      'Authorization': 'Bearer ' + $env.OPENAI_API_KEY,\n      'Content-Type': 'application/json'\n    },\n    body: JSON.stringify({\n      model: 'gpt-4o-mini',\n      max_tokens: 200,\n      messages: [\n        {\n          role: 'system',\n          content: 'Eres el asistente de Audivisión, clínica de audiología en España. Escribes mensajes de WhatsApp breves, empáticos y naturales para reactivar pacientes sin parecer spam.'\n        },\n        {\n          role: 'user',\n          content: `Escribe un mensaje de WhatsApp para un paciente que lleva tiempo sin venir. Máximo 3 frases. Natural, empático, nada comercial.\\n\\nPaciente: ${nombre}\\nLink de reserva: ${$env.CALCOM_BOOKING_LINK}\\n\\nResponde SOLO con el texto del mensaje.`\n        }\n      ]\n    })\n  });\n  const data = await res.json();\n  const mensaje = (data.choices?.[0]?.message?.content || '').trim();\n  return [{ json: { ...row, nombre_paciente: nombre, mensaje_reactivacion: mensaje || fallback } }];\n} catch (e) {\n  return [{ json: { ...row, nombre_paciente: nombre, mensaje_reactivacion: fallback } }];\n}"
       }
     },
     {
@@ -448,7 +350,7 @@
       "name": "WhatsApp Reactivacion Mensual",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1540, 620],
+      "position": [1820, 480],
       "parameters": {
         "method": "POST",
         "url": "=https://graph.facebook.com/v18.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
@@ -462,7 +364,7 @@
         "sendBody": true,
         "bodyContentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({\n  messaging_product: 'whatsapp',\n  to: ($json.telefono || $json.phone || '').toString().replace(/\\s+/g,'').replace(/^00/,'+'),\n  type: 'template',\n  template: {\n    name: 'reactivacion_mensual',\n    language: { code: 'es_ES' },\n    components: [{\n      type: 'body',\n      parameters: [\n        { type: 'text', text: $json.nombre || $json.cliente_nombre || $json.name || 'paciente' },\n        { type: 'text', text: $env.CALCOM_BOOKING_LINK }\n      ]\n    }]\n  }\n}) }}",
+        "body": "={{ JSON.stringify({\n  messaging_product: 'whatsapp',\n  to: ($json.telefono || $json.phone || '').toString().replace(/\\s+/g,'').replace(/^00/,'+'),\n  type: 'template',\n  template: {\n    name: 'reactivacion_mensual',\n    language: { code: 'es_ES' },\n    components: [{\n      type: 'body',\n      parameters: [\n        { type: 'text', text: $json.nombre_paciente },\n        { type: 'text', text: $json.mensaje_reactivacion },\n        { type: 'text', text: $env.CALCOM_BOOKING_LINK }\n      ]\n    }]\n  }\n}) }}",
         "options": {}
       }
     },
@@ -472,7 +374,7 @@
       "name": "Error Trigger",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
-      "position": [160, 880],
+      "position": [160, 860],
       "parameters": {}
     },
     {
@@ -480,9 +382,9 @@
       "name": "Formatear Mensaje Error",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [420, 880],
+      "position": [420, 860],
       "parameters": {
-        "jsCode": "const error = $input.first().json;\n\nconst workflowName = error.workflow?.name || 'Audivisión';\nconst nodeName = error.node?.name || 'Nodo desconocido';\nconst errorMsg = error.error?.message || error.message || 'Sin mensaje';\nconst errorStack = (error.error?.stack || '').substring(0, 500);\nconst execId = error.execution?.id || 'N/A';\n\nconst timestamp = new Date().toLocaleString('es-ES', {\n  timeZone: 'Europe/Madrid',\n  day: '2-digit', month: '2-digit', year: 'numeric',\n  hour: '2-digit', minute: '2-digit', second: '2-digit'\n});\n\nconst mensajeTelegram = [\n  '⚠️ <b>Error en Audivisión</b>',\n  '',\n  `📌 <b>Workflow:</b> ${workflowName}`,\n  `🔴 <b>Nodo:</b> ${nodeName}`,\n  `❌ <b>Error:</b> ${errorMsg}`,\n  `🕐 <b>Hora:</b> ${timestamp}`,\n  `🆔 <b>Ejecución ID:</b> ${execId}`\n].join('\\n');\n\nreturn [{\n  json: {\n    workflow_name: workflowName,\n    nodo_nombre: nodeName,\n    mensaje_error: errorMsg,\n    stack_trace: errorStack,\n    timestamp,\n    mensaje_telegram: mensajeTelegram\n  }\n}];"
+        "jsCode": "const error = $input.first().json;\n\nconst workflowName = error.workflow?.name || 'Audivisión';\nconst nodeName = error.node?.name || 'Nodo desconocido';\nconst errorMsg = error.error?.message || error.message || 'Sin mensaje';\nconst errorStack = (error.error?.stack || '').substring(0, 500);\nconst execId = error.execution?.id || 'N/A';\n\nconst timestamp = new Date().toLocaleString('es-ES', {\n  timeZone: 'Europe/Madrid',\n  day: '2-digit', month: '2-digit', year: 'numeric',\n  hour: '2-digit', minute: '2-digit', second: '2-digit'\n});\n\nconst mensajeTelegram = [\n  '⚠️ <b>Error en Audivisión</b>',\n  '',\n  `📌 <b>Workflow:</b> ${workflowName}`,\n  `🔴 <b>Nodo:</b> ${nodeName}`,\n  `❌ <b>Error:</b> ${errorMsg}`,\n  `🕐 <b>Hora:</b> ${timestamp}`,\n  `🆔 <b>Ejecución:</b> ${execId}`\n].join('\\n');\n\nreturn [{\n  json: {\n    workflow_name: workflowName,\n    nodo_nombre: nodeName,\n    mensaje_error: errorMsg,\n    stack_trace: errorStack,\n    timestamp,\n    mensaje_telegram: mensajeTelegram\n  }\n}];"
       }
     },
     {
@@ -490,14 +392,14 @@
       "name": "Telegram Notificar Admin",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [700, 780],
+      "position": [700, 760],
       "parameters": {
         "method": "POST",
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
         "sendBody": true,
         "bodyContentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({\n  chat_id: $env.TELEGRAM_ADMIN_CHAT_ID,\n  text: $json.mensaje_telegram,\n  parse_mode: 'HTML'\n}) }}",
+        "body": "={{ JSON.stringify({ chat_id: $env.TELEGRAM_ADMIN_CHAT_ID, text: $json.mensaje_telegram, parse_mode: 'HTML' }) }}",
         "options": {}
       }
     },
@@ -506,19 +408,11 @@
       "name": "Log de Errores en Sheets",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [700, 980],
+      "position": [700, 960],
       "parameters": {
         "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "={{ $env.SPREADSHEET_ID }}",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Errores",
-          "mode": "name"
-        },
+        "documentId": { "__rl": true, "value": "={{ $env.SPREADSHEET_ID }}", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Errores", "mode": "name" },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
@@ -532,111 +426,85 @@
         "options": {}
       },
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "CRED_GOOGLE_SHEETS",
-          "name": "Google Sheets OAuth2"
-        }
+        "googleSheetsOAuth2Api": { "id": "CRED_GOOGLE_SHEETS", "name": "Google Sheets OAuth2" }
       }
     }
   ],
 
   "connections": {
     "Webhook Cal.com": {
-      "main": [
-        [{ "node": "Extraer Datos Cal.com", "type": "main", "index": 0 }]
-      ]
+      "main": [[{ "node": "Extraer Datos Cal.com", "type": "main", "index": 0 }]]
     },
     "Extraer Datos Cal.com": {
-      "main": [
-        [
-          { "node": "Registrar en Reservas", "type": "main", "index": 0 },
-          { "node": "Crear Evento Calendar", "type": "main", "index": 0 }
-        ]
-      ]
+      "main": [[
+        { "node": "Registrar en Reservas", "type": "main", "index": 0 },
+        { "node": "Crear Evento Calendar", "type": "main", "index": 0 }
+      ]]
     },
     "Registrar en Reservas": {
-      "main": [
-        [{ "node": "Leer Hoja Reservas", "type": "main", "index": 0 }]
-      ]
+      "main": [[{ "node": "Leer Hoja Reservas", "type": "main", "index": 0 }]]
     },
     "Cron Cada Hora": {
-      "main": [
-        [{ "node": "Leer Hoja Reservas", "type": "main", "index": 0 }]
-      ]
+      "main": [[{ "node": "Leer Hoja Reservas", "type": "main", "index": 0 }]]
     },
     "Leer Hoja Reservas": {
-      "main": [
-        [
-          { "node": "Filtrar Recordatorio SMS", "type": "main", "index": 0 },
-          { "node": "Filtrar Solicitud Resena", "type": "main", "index": 0 }
-        ]
-      ]
+      "main": [[
+        { "node": "Filtrar Recordatorio SMS", "type": "main", "index": 0 },
+        { "node": "Filtrar Solicitud Resena", "type": "main", "index": 0 }
+      ]]
     },
     "Filtrar Recordatorio SMS": {
-      "main": [
-        [{ "node": "Brevo SMS Recordatorio", "type": "main", "index": 0 }]
-      ]
+      "main": [[{ "node": "IA Personalizar SMS", "type": "main", "index": 0 }]]
+    },
+    "IA Personalizar SMS": {
+      "main": [[{ "node": "Brevo SMS Recordatorio", "type": "main", "index": 0 }]]
     },
     "Brevo SMS Recordatorio": {
-      "main": [
-        [{ "node": "Actualizar SMS Enviado", "type": "main", "index": 0 }]
-      ]
+      "main": [[{ "node": "Actualizar SMS Enviado", "type": "main", "index": 0 }]]
     },
     "Filtrar Solicitud Resena": {
-      "main": [
-        [{ "node": "WhatsApp Solicitar Resena", "type": "main", "index": 0 }]
-      ]
+      "main": [[{ "node": "IA Personalizar Resena", "type": "main", "index": 0 }]]
+    },
+    "IA Personalizar Resena": {
+      "main": [[{ "node": "WhatsApp Solicitar Resena", "type": "main", "index": 0 }]]
     },
     "WhatsApp Solicitar Resena": {
-      "main": [
-        [{ "node": "Actualizar Resena Enviada", "type": "main", "index": 0 }]
-      ]
+      "main": [[{ "node": "Actualizar Resena Enviada", "type": "main", "index": 0 }]]
     },
 
     "Cron Mensual Reactivacion": {
-      "main": [
-        [{ "node": "Listar Archivos Drive", "type": "main", "index": 0 }]
-      ]
+      "main": [[{ "node": "Listar Archivos Drive", "type": "main", "index": 0 }]]
     },
     "Listar Archivos Drive": {
-      "main": [
-        [{ "node": "Descargar Archivo Pacientes", "type": "main", "index": 0 }]
-      ]
+      "main": [[{ "node": "Descargar Archivo Pacientes", "type": "main", "index": 0 }]]
     },
     "Descargar Archivo Pacientes": {
-      "main": [
-        [{ "node": "Parsear Lista Pacientes", "type": "main", "index": 0 }]
-      ]
+      "main": [[{ "node": "Parsear Lista Pacientes", "type": "main", "index": 0 }]]
     },
     "Parsear Lista Pacientes": {
-      "main": [
-        [{ "node": "Split por Paciente", "type": "main", "index": 0 }]
-      ]
+      "main": [[{ "node": "Split por Paciente", "type": "main", "index": 0 }]]
     },
     "Split por Paciente": {
       "main": [
-        [{ "node": "WhatsApp Reactivacion Mensual", "type": "main", "index": 0 }],
-        []
+        [{ "node": "IA Personalizar Reactivacion", "type": "main", "index": 0 }],
+        [{ "node": "Leer Hoja Reservas", "type": "main", "index": 0 }]
       ]
     },
+    "IA Personalizar Reactivacion": {
+      "main": [[{ "node": "WhatsApp Reactivacion Mensual", "type": "main", "index": 0 }]]
+    },
     "WhatsApp Reactivacion Mensual": {
-      "main": [
-        [{ "node": "Split por Paciente", "type": "main", "index": 0 }]
-      ]
+      "main": [[{ "node": "Split por Paciente", "type": "main", "index": 0 }]]
     },
 
     "Error Trigger": {
-      "main": [
-        [{ "node": "Formatear Mensaje Error", "type": "main", "index": 0 }]
-      ]
+      "main": [[{ "node": "Formatear Mensaje Error", "type": "main", "index": 0 }]]
     },
     "Formatear Mensaje Error": {
-      "main": [
-        [
-          { "node": "Telegram Notificar Admin", "type": "main", "index": 0 },
-          { "node": "Log de Errores en Sheets", "type": "main", "index": 0 }
-        ]
-      ]
+      "main": [[
+        { "node": "Telegram Notificar Admin", "type": "main", "index": 0 },
+        { "node": "Log de Errores en Sheets", "type": "main", "index": 0 }
+      ]]
     }
   },
 
@@ -647,9 +515,6 @@
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": ""
   },
-  "meta": {
-    "templateCredsSetupCompleted": false,
-    "n8nVersion": "1.40.0"
-  },
+  "meta": { "templateCredsSetupCompleted": false, "n8nVersion": "1.40.0" },
   "pinData": {}
 }
