@@ -113,7 +113,7 @@
 
     {
       "id": "sc-001",
-      "name": "Cron 15 Minutos",
+      "name": "Cron Cada Hora",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [160, 380],
@@ -121,8 +121,8 @@
         "rule": {
           "interval": [
             {
-              "field": "minutes",
-              "minutesInterval": 15
+              "field": "hours",
+              "hoursInterval": 1
             }
           ]
         }
@@ -559,7 +559,7 @@
         [{ "node": "Leer Hoja Reservas", "type": "main", "index": 0 }]
       ]
     },
-    "Cron 15 Minutos": {
+    "Cron Cada Hora": {
       "main": [
         [{ "node": "Leer Hoja Reservas", "type": "main", "index": 0 }]
       ]
